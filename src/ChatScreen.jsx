@@ -14,129 +14,101 @@ import {
   ChatMessageChatType,
   ChatMessage,
 } from 'react-native-agora-chat';
+
 // Defines the App object.
 const App = () => {
-  // Defines the variable.
   const title = 'AgoraChatQuickstart';
-  // Replaces <your appKey> with your app key.
-  const appKey = '611197883#1386945';
-  // Replaces <your userId> with your user ID.
+  const appKey = '611197883#1388710'; // Make sure this is the correct App Key from the Agora Console
   const [username, setUsername] = React.useState('23');
-  // Replaces <your agoraToken> with your Agora token.
   const [chatToken, setChatToken] = React.useState(
-    '007eJxTYFj0tTw6zffmq2Ny1prNPGWKoapKDy+fkeqdP+UNl3jXpEoFBpM0QzNTi2RLc5PkFBODZIMkk7RUA3PTtNQkA4vEJOOUCOfjaQ2BjAzqB/cyMDKwAjETA4jPwAAAaYwdXw==',
+    '007eJxTYGj5q3ZOJXLtu+XKm5ZH6m8TObSFY+7MfDElydmvTjCd+jpXgSEpxSItJS3VwMgyMdnE1DjR0jjVzMjMwDTV3Mjc1NTI4Av3mbSGQEaG6sRARkYGVgZGBiYGEJ+BAQDBMx4C', // Replace with valid Agora Token
   );
   const [targetId, setTargetId] = React.useState('');
   const [content, setContent] = React.useState('');
   const [logText, setWarnText] = React.useState('Show log area');
+  const [isInitialized, setIsInitialized] = React.useState(false); // Track initialization status
   const chatClient = ChatClient.getInstance();
   const chatManager = chatClient.chatManager;
-  // Outputs console logs.
-  useEffect(() => {
-    logText.split('\n').forEach((value, index, array) => {
-      if (index === 0) {
-        console.log(value);
-      }
-    });
-  }, [logText]);
+
   // Outputs UI logs.
   const rollLog = text => {
     setWarnText(preLogText => {
       let newLogText = text;
       preLogText
         .split('\n')
-        .filter((value, index, array) => {
-          if (index > 8) {
-            return false;
-          }
-          return true;
-        })
-        .forEach((value, index, array) => {
+        .filter((_, index) => index <= 8)
+        .forEach(value => {
           newLogText += '\n' + value;
         });
       return newLogText;
     });
   };
+
   useEffect(() => {
-    // Registers listeners for messaging.
     const setMessageListener = () => {
-      let msgListener = {
+      const msgListener = {
         onMessagesReceived(messages) {
-          for (let index = 0; index < messages.length; index++) {
-            rollLog('received msgId: ' + messages[index].msgId);
-          }
+          messages.forEach(message => {
+            rollLog('received msgId: ' + message.msgId);
+          });
         },
-        onCmdMessagesReceived: messages => {},
-        onMessagesRead: messages => {},
-        onGroupMessageRead: groupMessageAcks => {},
-        onMessagesDelivered: messages => {},
-        onMessagesRecalled: messages => {},
-        onConversationsUpdate: () => {},
-        onConversationRead: (from, to) => {},
+        // Other listeners can be added here if needed.
       };
       chatManager.removeAllMessageListener();
       chatManager.addMessageListener(msgListener);
     };
-    // Initializes the SDK.
-    // Initializes any interface before calling it.
+
     const init = () => {
-      let o = new ChatOptions({
-        autoLogin: false,
-        appKey: appKey,
-      });
+      const options = new ChatOptions({appKey});
       chatClient.removeAllConnectionListener();
       chatClient
-        .init(o)
+        .init(options)
         .then(() => {
           rollLog('init success');
-          this.isInitialized = true;
-          let listener = {
+          setIsInitialized(true); // Set initialized to true
+          const listener = {
             onTokenWillExpire() {
-              rollLog('token expire.');
+              rollLog('token will expire soon.');
             },
             onTokenDidExpire() {
-              rollLog('token did expire');
+              rollLog('token has expired.');
             },
             onConnected() {
               rollLog('onConnected');
               setMessageListener();
             },
             onDisconnected(errorCode) {
-              rollLog('onDisconnected:' + errorCode);
+              rollLog('onDisconnected: ' + errorCode);
             },
           };
           chatClient.addConnectionListener(listener);
         })
         .catch(error => {
-          rollLog(
-            'init fail: ' +
-              (error instanceof Object ? JSON.stringify(error) : error),
-          );
+          rollLog('init fail: ' + JSON.stringify(error));
         });
     };
     init();
-  }, [chatClient, chatManager, appKey]);
+  }, [appKey, chatClient, chatManager]);
 
-  // Logs in with an account ID and a token.
   const login = () => {
-    if (this.isInitialized === false || this.isInitialized === undefined) {
-      rollLog('Perform initialization first.');
+    if (!isInitialized) {
+      rollLog('Initialize the SDK first.');
       return;
     }
     rollLog('start login ...');
     chatClient
       .loginWithAgoraToken(username, chatToken)
       .then(() => {
-        rollLog('login operation success.');
+        rollLog('login success');
       })
-      .catch(reason => {
-        rollLog('login fail: ' + JSON.stringify(reason));
+      .catch(error => {
+        rollLog('login failed: ' + JSON.stringify(error));
       });
   };
-  // Logs out from server.
+
   const logout = () => {
-    if (this.isInitialized === false || this.isInitialized === undefined) {
-      rollLog('Perform initialization first.');
+    if (!isInitialized) {
+      rollLog('Initialize the SDK first.');
       return;
     }
     rollLog('start logout ...');
@@ -145,43 +117,43 @@ const App = () => {
       .then(() => {
         rollLog('logout success.');
       })
-      .catch(reason => {
-        rollLog('logout fail:' + JSON.stringify(reason));
+      .catch(error => {
+        rollLog('logout failed: ' + JSON.stringify(error));
       });
   };
-  // Sends a text message to somebody.
+
   const sendmsg = () => {
-    if (this.isInitialized === false || this.isInitialized === undefined) {
-      rollLog('Perform initialization first.');
+    if (!isInitialized) {
+      rollLog('Initialize the SDK first.');
       return;
     }
-    let msg = ChatMessage.createTextMessage(
+    const message = ChatMessage.createTextMessage(
       targetId,
       content,
       ChatMessageChatType.PeerChat,
     );
-    const callback = new (class {
+    const callback = {
       onProgress(locaMsgId, progress) {
-        rollLog(`send message process: ${locaMsgId}, ${progress}`);
-      }
+        rollLog(`send message progress: ${locaMsgId}, ${progress}`);
+      },
       onError(locaMsgId, error) {
-        rollLog(`send message fail: ${locaMsgId}, ${JSON.stringify(error)}`);
-      }
-      onSuccess(message) {
-        rollLog('send message success: ' + message.localMsgId);
-      }
-    })();
-    rollLog('start send message ...');
+        rollLog(`send message failed: ${locaMsgId}, ${JSON.stringify(error)}`);
+      },
+      onSuccess(msg) {
+        rollLog('send message success: ' + msg.localMsgId);
+      },
+    };
+    rollLog('start sending message ...');
     chatClient.chatManager
-      .sendMessage(msg, callback)
+      .sendMessage(message, callback)
       .then(() => {
-        rollLog('send message: ' + msg.localMsgId);
+        rollLog('send message: ' + message.localMsgId);
       })
-      .catch(reason => {
-        rollLog('send fail: ' + JSON.stringify(reason));
+      .catch(error => {
+        rollLog('send message failed: ' + JSON.stringify(error));
       });
   };
-  // Renders the UI.
+
   return (
     <SafeAreaView>
       <View style={styles.titleContainer}>
@@ -193,7 +165,7 @@ const App = () => {
             multiline
             style={styles.inputBox}
             placeholder="Enter username"
-            onChangeText={text => setUsername(text)}
+            onChangeText={setUsername}
             value={username}
           />
         </View>
@@ -202,7 +174,7 @@ const App = () => {
             multiline
             style={styles.inputBox}
             placeholder="Enter chatToken"
-            onChangeText={text => setChatToken(text)}
+            onChangeText={setChatToken}
             value={chatToken}
           />
         </View>
@@ -218,8 +190,8 @@ const App = () => {
           <TextInput
             multiline
             style={styles.inputBox}
-            placeholder="Enter the username you want to send"
-            onChangeText={text => setTargetId(text)}
+            placeholder="Enter the target username"
+            onChangeText={setTargetId}
             value={targetId}
           />
         </View>
@@ -227,8 +199,8 @@ const App = () => {
           <TextInput
             multiline
             style={styles.inputBox}
-            placeholder="Enter content"
-            onChangeText={text => setContent(text)}
+            placeholder="Enter message content"
+            onChangeText={setContent}
             value={content}
           />
         </View>
@@ -242,16 +214,11 @@ const App = () => {
             {logText}
           </Text>
         </View>
-        <View>
-          <Text style={styles.logText}>{}</Text>
-        </View>
-        <View>
-          <Text style={styles.logText}>{}</Text>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
 };
+
 // Sets UI styles.
 const styles = StyleSheet.create({
   titleContainer: {
