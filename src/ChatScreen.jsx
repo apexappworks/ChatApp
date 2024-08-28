@@ -18,12 +18,12 @@ import {
 // Defines the App object.
 const App = () => {
   const title = 'AgoraChatQuickstart';
-  const appKey = '611197883#1388710'; // Make sure this is the correct App Key from the Agora Console
-  const [username, setUsername] = React.useState('23');
+  const appKey = '611197883#1390078'; // Make sure this is the correct App Key from the Agora Console
+  const [username, setUsername] = React.useState('124');
   const [chatToken, setChatToken] = React.useState(
-    '007eJxTYGj5q3ZOJXLtu+XKm5ZH6m8TObSFY+7MfDElydmvTjCd+jpXgSEpxSItJS3VwMgyMdnE1DjR0jjVzMjMwDTV3Mjc1NTI4Av3mbSGQEaG6sRARkYGVgZGBiYGEJ+BAQDBMx4C', // Replace with valid Agora Token
+    '007eJxTYFD4oL6osyzlhu2zy/nOhyfGL82SXRqz8uvs0rPmalvXt1UpMCQbGqWYWiQZJicZmZqYGJgnpiSbpqWkGZkYpaRYWloa8T0/l9YQyMig7DuViZGBlYERCEF8FQYDYwsTS/NUA10zU0NjXUPD1DTdRLOkRF1jwzSTtKREM2NLY0MA8AcoEw==', // Replace with valid Agora Token
   );
-  const [targetId, setTargetId] = React.useState('');
+  const [targetId, setTargetId] = React.useState('123');
   const [content, setContent] = React.useState('');
   const [logText, setWarnText] = React.useState('Show log area');
   const [isInitialized, setIsInitialized] = React.useState(false); // Track initialization status
@@ -49,7 +49,13 @@ const App = () => {
       const msgListener = {
         onMessagesReceived(messages) {
           messages.forEach(message => {
-            rollLog('received msgId: ' + message.msgId);
+            const textContent = message.body?.content || 'No text content'; // Safely get the message content
+            rollLog(
+              'received msgId: ' +
+                message.localMsgId +
+                ', text: ' +
+                textContent,
+            );
           });
         },
         // Other listeners can be added here if needed.
