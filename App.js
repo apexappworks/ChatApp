@@ -1,10 +1,13 @@
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import {createStackNavigator} from '@react-navigation/stack'; // Corrected import
-import SignupScreen from './src/Signup';
-import LoginScreen from './src/Login';
-import ChatScreen from './src/ChatScreen';
 
+import Dashboard from './src/Dashboard/Dashboard';
+import SignupScreen from './src/Authentication/Signup';
+import LoginScreen from './src/Authentication/Login';
+import ChatScreen from './src/Messaging/ChatScreen';
+import CallFunctionality from './src/Calling/VideoCalling/Call';
+import VoiceCall from './src/Calling/VoiceCalling/VoiceCall';
 const Stack = createStackNavigator();
 
 const App = () => {
@@ -14,6 +17,13 @@ const App = () => {
         <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="ChatScreen" component={ChatScreen} />
+        <Stack.Screen name="Call" component={CallFunctionality} />
+        <Stack.Screen name="VoiceCall" component={VoiceCall} />
+        <Stack.Screen
+          name="Dashboard"
+          component={Dashboard}
+          options={{headerShown: false}}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
